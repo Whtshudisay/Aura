@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/*
+  Aura design tokens — sourced from DESIGN.md / Stitch.
+  Tweak these variables when new Stitch screenshots land; components read from tokens.
+*/
+:root {
+  /* Surfaces */
+  --color-surface: #101415;
+  --color-surface-dim: #101415;
+  --color-surface-bright: #363a3b;
+  --color-surface-lowest: #0b0f10;
+  --color-surface-low: #191c1e;
+  --color-surface-container: #1d2022;
+  --color-surface-high: #272a2c;
+  --color-surface-highest: #323537;
+  --color-background: #101415;
+  --color-on-background: #e0e3e5;
+  --color-on-surface: #e0e3e5;
+  --color-on-surface-variant: #c1c8c5;
+  --color-outline: #8b9290;
+  --color-outline-variant: #414846;
+
+  /* Brand */
+  --color-primary: #accec5;
+  --color-on-primary: #163630;
+  --color-primary-container: #84a59d;
+  --color-secondary: #afcbd6;
+  --color-on-secondary: #19343d;
+  --color-secondary-container: #334d56;
+  --color-tertiary: #cbbeff;
+  --color-on-tertiary: #331488;
+
+  /* Horizon gradient (DESIGN.md) */
+  --gradient-horizon: linear-gradient(180deg, #334155 0%, #2b454e 100%);
+  --gradient-page: radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      rgba(172, 206, 197, 0.08),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #151a1c 0%, #101415 45%, #0b0f10 100%);
+
+  /* Accents for technique icons */
+  --accent-sage-soft: rgba(172, 206, 197, 0.18);
+  --accent-teal-soft: rgba(175, 203, 214, 0.18);
+  --accent-lavender-soft: rgba(203, 190, 255, 0.18);
+  --glow-sage: rgba(172, 206, 197, 0.45);
+  --glow-teal: rgba(175, 203, 214, 0.4);
+  --glow-lavender: rgba(203, 190, 255, 0.4);
+
+  /* Glass */
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --glass-fill-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-blur: 20px;
+
+  /* Shape */
+  --radius-sm: 0.5rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+  --radius-full: 9999px;
+
+  /* Spacing (8px unit) */
+  --space-unit: 8px;
+  --container-pad-mobile: 24px;
+  --container-pad-desktop: 48px;
+  --section-gap: 48px;
+  /* Wide shell so dashboard widgets fill large viewports */
+  --max-width: 1680px;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-aura-bg: var(--color-background);
+  --color-aura-fg: var(--color-on-background);
+  --color-aura-muted: var(--color-on-surface-variant);
+  --color-aura-primary: var(--color-primary);
+  --color-aura-secondary: var(--color-secondary);
+  --color-aura-tertiary: var(--color-tertiary);
+  --color-aura-surface: var(--color-surface-container);
+  --color-aura-surface-high: var(--color-surface-high);
+  --color-aura-outline: var(--color-outline-variant);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--gradient-page);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(172, 206, 197, 0.35);
+    color: var(--color-on-background);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .glass-strong {
+    background: var(--glass-fill-strong);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .label-caps {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .display-lg {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 300;
+    line-height: 1.15;
+    letter-spacing: 0.05em;
+  }
+
+  .headline-lg {
+    font-size: clamp(28px, 3vw, 32px);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 28px var(--glow-sage), 0 0 8px rgba(172, 206, 197, 0.35);
+  }
+
+  .page-shell {
+    width: 100%;
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-inline: var(--container-pad-mobile);
+  }
+
+  @media (min-width: 1024px) {
+    .page-shell {
+      padding-inline: var(--container-pad-desktop);
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .page-shell {
+      padding-inline: 64px;
+    }
+  }
+}
