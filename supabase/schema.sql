@@ -17,11 +17,14 @@ create table if not exists public.practice_sessions (
   pattern_name text not null,
   duration_min integer not null check (duration_min > 0),
   accent text not null,
+  mood text,
   completed_at timestamptz not null default now()
 );
 
 create index if not exists practice_sessions_user_completed_idx
   on public.practice_sessions (user_id, completed_at desc);
+
+alter table public.practice_sessions add column if not exists mood text;
 
 alter table public.profiles enable row level security;
 alter table public.practice_sessions enable row level security;

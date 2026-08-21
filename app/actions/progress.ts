@@ -2,13 +2,16 @@
 
 import { getSessionUser } from "@/lib/auth";
 import { recordPracticeSession } from "@/lib/progress";
-import type { PatternAccent } from "@/lib/types";
+import type { PatternAccent, SessionMood } from "@/lib/types";
+
+const MOODS = new Set<SessionMood>(["stressed", "neutral", "calmer", "relaxed"]);
 
 export async function saveCompletedSession(input: {
   patternId: string;
   patternName: string;
   durationMin: number;
   accent: PatternAccent;
+  mood?: SessionMood | null;
 }): Promise<{ ok: boolean; error?: string }> {
   const user = await getSessionUser();
   if (!user) {
@@ -19,6 +22,8 @@ export async function saveCompletedSession(input: {
     return { ok: false, error: "Invalid session data." };
   }
 
+  const mood = input.mood && MOODS.has(input.mood) ? input.mood : null;
+
   try {
     await recordPracticeSession({
       userId: user.id,
@@ -26,6 +31,7 @@ export async function saveCompletedSession(input: {
       patternName: input.patternName,
       durationMin: input.durationMin,
       accent: input.accent,
+      mood,
     });
     return { ok: true };
   } catch (err) {

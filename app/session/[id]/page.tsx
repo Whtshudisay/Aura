@@ -13,11 +13,11 @@ export default async function SessionPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ duration?: string }>;
+  searchParams: Promise<{ duration?: string; autostart?: string }>;
 }) {
   const user = await getSessionUser();
   const { id } = await params;
-  const { duration: durationRaw } = await searchParams;
+  const { duration: durationRaw, autostart: autostartRaw } = await searchParams;
   const pattern = getPatternById(id);
   if (!pattern) notFound();
 
@@ -28,6 +28,9 @@ export default async function SessionPage({
   const parsed = Number(durationRaw);
   const durationMin =
     Number.isFinite(parsed) && parsed > 0 ? parsed : pattern.defaultDurationMin;
+  const autoStart = autostartRaw === "1" || autostartRaw === "true";
 
-  return <SessionView pattern={pattern} durationMin={durationMin} />;
+  return (
+    <SessionView pattern={pattern} durationMin={durationMin} autoStart={autoStart} />
+  );
 }

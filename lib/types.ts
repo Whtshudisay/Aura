@@ -44,6 +44,8 @@ export interface BreathingPattern {
   stub?: boolean;
 }
 
+export type SessionMood = "stressed" | "neutral" | "calmer" | "relaxed";
+
 export interface RecentSession {
   id: string;
   patternId: string;
@@ -51,6 +53,13 @@ export interface RecentSession {
   when: string;
   durationMin: number;
   accent: PatternAccent;
+  mood?: SessionMood | null;
+}
+
+export interface WeeklyMoodInsight {
+  logged: number;
+  lifted: number;
+  recentMoods: SessionMood[];
 }
 
 export interface WeeklyProgress {
@@ -58,4 +67,5 @@ export interface WeeklyProgress {
   goalMin: number;
   streakDays: number;
   recent: RecentSession[];
+  mood: WeeklyMoodInsight;
 }

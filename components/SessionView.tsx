@@ -3,27 +3,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import type { BreathingPattern } from "@/lib/types";
+import type { BreathingPattern, SessionMood } from "@/lib/types";
 import { useBreathingTimer } from "@/hooks/useBreathingTimer";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useAmbientAudio } from "@/hooks/useAmbientAudio";
+import { usePacingMode } from "@/hooks/usePacingMode";
 import { BreathingOrb } from "@/components/BreathingOrb";
 import { SessionControls } from "@/components/SessionControls";
 import { SessionExtras } from "@/components/SessionExtras";
+import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { setsFromDuration } from "@/data/patterns";
 import { saveCompletedSession } from "@/app/actions/progress";
+import { appendMoodLog } from "@/lib/moodLog";
+import { scalePhases } from "@/lib/pacing";
 
 export function SessionView({
   pattern,
   durationMin,
+  autoStart = false,
 }: {
   pattern: BreathingPattern;
   durationMin: number;
+  autoStart?: boolean;
 }) {
   const router = useRouter();
-  const totalSets = setsFromDuration(pattern, durationMin);
+  const pacing = usePacingMode();
+  const pacedPhases = scalePhases(pattern.phases, pacing.multiplier);
+  const totalSets = setsFromDuration(pattern, durationMin, pacedPhases);
   const [hasStarted, setHasStarted] = useState(false);
+  const [awaitingMood, setAwaitingMood] = useState(false);
   const savedRef = useRef(false);
+  const autoStartedRef = useRef(false);
   const haptics = useHaptics(true);
   const ambient = useAmbientAudio();
   const lastPhaseKey = useRef<string | null>(null);
@@ -36,33 +46,62 @@ export function SessionView({
     stop: stopAmbient,
   } = ambient;
 
+  const persistSession = useCallback(
+    (mood: SessionMood | null) => {
+      if (savedRef.current) return;
+      savedRef.current = true;
+      appendMoodLog({
+        patternId: pattern.id,
+        patternName: pattern.name,
+        durationMin,
+        mood,
+      });
+      void saveCompletedSession({
+        patternId: pattern.id,
+        patternName: pattern.name,
+        durationMin,
+        accent: pattern.accent,
+        mood,
+      }).then(() => {
+        router.refresh();
+      });
+    },
+    [pattern.id, pattern.name, pattern.accent, durationMin, router],
+  );
+
   const onComplete = useCallback(() => {
     pauseAmbient();
-    if (savedRef.current) return;
-    savedRef.current = true;
-    void saveCompletedSession({
-      patternId: pattern.id,
-      patternName: pattern.name,
-      durationMin,
-      accent: pattern.accent,
-    }).then(() => {
-      router.refresh();
-    });
-  }, [pauseAmbient, pattern.id, pattern.name, pattern.accent, durationMin, router]);
+    setAwaitingMood(true);
+  }, [pauseAmbient]);
 
   const timer = useBreathingTimer({
     phases: pattern.phases,
     phaseLabels: pattern.phaseLabels,
     totalSets,
+    paceMultiplier: pacing.multiplier,
     autoStart: false,
     onComplete,
   });
+
+  const startTimer = timer.start;
+  const start = useCallback(() => {
+    setHasStarted(true);
+    lastPhaseKey.current = null;
+    startTimer();
+    if (soundEnabled) void playAmbient();
+    vibratePhaseChange();
+  }, [startTimer, soundEnabled, playAmbient, vibratePhaseChange]);
+
+  useEffect(() => {
+    if (!autoStart || !pacing.ready || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    start();
+  }, [autoStart, pacing.ready, start]);
 
   useEffect(() => {
     if (timer.isRunning) setHasStarted(true);
   }, [timer.isRunning]);
 
-  // Haptic pulse when the phase label/index changes during a live session
   useEffect(() => {
     if (!hasStarted || timer.isComplete) return;
     const key = `${timer.currentSet}:${timer.phaseIndex}:${timer.phaseLabel}`;
@@ -83,7 +122,6 @@ export function SessionView({
     vibratePhaseChange,
   ]);
 
-  // Sync ambient audio with running state
   useEffect(() => {
     if (!soundEnabled) {
       pauseAmbient();
@@ -104,15 +142,8 @@ export function SessionView({
 
   const close = () => {
     stopAmbient();
+    if (timer.isComplete && awaitingMood) persistSession(null);
     router.push("/");
-  };
-
-  const start = () => {
-    setHasStarted(true);
-    lastPhaseKey.current = null;
-    timer.start();
-    if (soundEnabled) void playAmbient();
-    vibratePhaseChange();
   };
 
   const pause = () => {
@@ -124,12 +155,19 @@ export function SessionView({
     stopAmbient();
     savedRef.current = false;
     lastPhaseKey.current = null;
+    autoStartedRef.current = false;
+    setAwaitingMood(false);
     timer.reset();
     setHasStarted(false);
   };
 
+  const finishMood = (mood: SessionMood | null) => {
+    persistSession(mood);
+    setAwaitingMood(false);
+  };
+
   const displayLabel = hasStarted ? timer.phaseLabel : "Ready";
-  const displaySeconds = hasStarted ? timer.secondsRemaining : pattern.phases[0] ?? 4;
+  const displaySeconds = hasStarted ? timer.secondsRemaining : pacedPhases[0] ?? 4;
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden">
@@ -203,17 +241,26 @@ export function SessionView({
           volume={ambient.volume}
           onVolumeChange={ambient.setVolume}
           tracks={ambient.tracks}
+          pacingMode={pacing.mode}
+          onPacingChange={pacing.setMode}
+          pacingDisabled={(hasStarted && !timer.isComplete) || awaitingMood}
         />
 
-        <SessionControls
-          hasStarted={hasStarted}
-          isRunning={timer.isRunning}
-          isComplete={timer.isComplete}
-          onStart={start}
-          onPause={pause}
-          onRestart={restart}
-        />
+        {!awaitingMood && (
+          <SessionControls
+            hasStarted={hasStarted}
+            isRunning={timer.isRunning}
+            isComplete={timer.isComplete}
+            onStart={start}
+            onPause={pause}
+            onRestart={restart}
+          />
+        )}
       </div>
+
+      {awaitingMood && (
+        <MoodCheckIn onSelect={finishMood} onSkip={() => finishMood(null)} />
+      )}
     </div>
   );
 }

@@ -177,8 +177,12 @@ export function getAllPatterns(): BreathingPattern[] {
 }
 
 /** Approximate sets from duration (minutes) using sum of phase seconds. */
-export function setsFromDuration(pattern: BreathingPattern, durationMin: number): number {
-  const cycleSec = pattern.phases.reduce((a, b) => a + b, 0);
+export function setsFromDuration(
+  pattern: BreathingPattern,
+  durationMin: number,
+  phases: number[] = pattern.phases,
+): number {
+  const cycleSec = phases.reduce((a, b) => a + b, 0);
   if (cycleSec <= 0) return pattern.defaultSets;
   return Math.max(1, Math.round((durationMin * 60) / cycleSec));
 }

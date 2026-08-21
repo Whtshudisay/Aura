@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { WeeklyProgress } from "@/lib/types";
+import { MoodInsightCard } from "@/components/MoodInsightCard";
 import { PatternIconBadge } from "@/components/PatternIcon";
 import { getPatternById } from "@/data/patterns";
 
@@ -53,6 +54,10 @@ export function WeeklyProgressSidebar({
       <div className="mb-8 flex justify-between text-xs text-[var(--color-on-surface-variant)]">
         <span>Goal: {progress.goalMin}m</span>
         <span>{pct}%</span>
+      </div>
+
+      <div className="mb-8">
+        <MoodInsightCard serverMood={progress.mood} />
       </div>
 
       <h3 className="label-caps mb-4 text-[var(--color-on-surface-variant)]">

@@ -5,6 +5,8 @@ export const PREFS = {
   soundEnabled: "aura.sound.enabled",
   soundTrack: "aura.sound.track",
   soundVolume: "aura.sound.volume",
+  pacingMode: "aura.pacing.mode",
+  moodLog: "aura.mood.log",
 } as const;
 
 export type AmbientTrackId = "rain" | "meditation" | "off";

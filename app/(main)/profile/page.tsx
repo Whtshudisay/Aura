@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import { getSessionUser } from "@/lib/auth";
 import { getWeeklyProgressForUser } from "@/lib/progress";
+import { MoodInsightCard } from "@/components/MoodInsightCard";
 
 export default async function ProfilePage() {
   const user = await getSessionUser();
@@ -16,6 +17,7 @@ export default async function ProfilePage() {
             You can breathe right away as a guest. Create a free account to save
             streaks, weekly minutes, and recent sessions across devices.
           </p>
+          <MoodInsightCard />
           <Link
             href="/login?mode=register"
             className="inline-flex rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-medium text-[var(--color-on-primary)]"
@@ -61,6 +63,7 @@ export default async function ProfilePage() {
             {progress.totalMin} / {progress.goalMin} min
           </p>
         </div>
+        <MoodInsightCard serverMood={progress.mood} />
         <p className="text-sm leading-relaxed text-[var(--color-on-surface-variant)]">
           Completed sessions are saved to your account and drive the weekly progress
           widget on the home screen.
