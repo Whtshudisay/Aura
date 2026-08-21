@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { PatternAccent, RecentSession, WeeklyProgress } from "@/lib/types";
 
@@ -79,57 +80,48 @@ export async function recordPracticeSession(input: {
   }
 }
 
-export async function getWeeklyProgressForUser(
-  userId: string,
-  weeklyGoalMin: number,
-): Promise<WeeklyProgress> {
-  const supabase = await createClient();
-  const now = new Date();
-  const weekStart = startOfWeek(now).toISOString();
+/** One DB round-trip; memoized per request for layout + page. */
+export const getWeeklyProgressForUser = cache(
+  async (userId: string, weeklyGoalMin: number): Promise<WeeklyProgress> => {
+    const supabase = await createClient();
+    const now = new Date();
+    const weekStartMs = startOfWeek(now).getTime();
 
-  const { data: weekRows } = await supabase
-    .from("practice_sessions")
-    .select("duration_min")
-    .eq("user_id", userId)
-    .gte("completed_at", weekStart);
+    const { data: rows } = await supabase
+      .from("practice_sessions")
+      .select("id, pattern_id, pattern_name, duration_min, accent, completed_at")
+      .eq("user_id", userId)
+      .order("completed_at", { ascending: false });
 
-  const totalMin = (weekRows ?? []).reduce(
-    (sum, row) => sum + (row.duration_min ?? 0),
-    0,
-  );
+    const list = rows ?? [];
 
-  const { data: allRows } = await supabase
-    .from("practice_sessions")
-    .select("completed_at")
-    .eq("user_id", userId)
-    .order("completed_at", { ascending: false });
+    const totalMin = list.reduce((sum, row) => {
+      if (new Date(row.completed_at).getTime() >= weekStartMs) {
+        return sum + (row.duration_min ?? 0);
+      }
+      return sum;
+    }, 0);
 
-  const { data: recentRows } = await supabase
-    .from("practice_sessions")
-    .select("id, pattern_id, pattern_name, duration_min, accent, completed_at")
-    .eq("user_id", userId)
-    .order("completed_at", { ascending: false })
-    .limit(5);
+    const recent: RecentSession[] = list.slice(0, 5).map((row) => ({
+      id: row.id,
+      patternId: row.pattern_id,
+      patternName: row.pattern_name,
+      when: formatWhen(row.completed_at, now),
+      durationMin: row.duration_min,
+      accent: row.accent as PatternAccent,
+    }));
 
-  const recent: RecentSession[] = (recentRows ?? []).map((row) => ({
-    id: row.id,
-    patternId: row.pattern_id,
-    patternName: row.pattern_name,
-    when: formatWhen(row.completed_at, now),
-    durationMin: row.duration_min,
-    accent: row.accent as PatternAccent,
-  }));
-
-  return {
-    totalMin,
-    goalMin: weeklyGoalMin,
-    streakDays: computeStreak(
-      (allRows ?? []).map((r) => r.completed_at),
-      now,
-    ),
-    recent,
-  };
-}
+    return {
+      totalMin,
+      goalMin: weeklyGoalMin,
+      streakDays: computeStreak(
+        list.map((r) => r.completed_at),
+        now,
+      ),
+      recent,
+    };
+  },
+);
 
 export function emptyWeeklyProgress(goalMin = 60): WeeklyProgress {
   return {

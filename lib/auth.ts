@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export type SessionUser = {
@@ -7,7 +8,8 @@ export type SessionUser = {
   weeklyGoalMin: number;
 };
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+/** Per-request memo so layout + page share one auth/profile fetch. */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,7 +36,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     name,
     weeklyGoalMin: profile?.weekly_goal_min ?? 60,
   };
-}
+});
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
