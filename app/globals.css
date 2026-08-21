@@ -69,12 +69,12 @@
   /* Wide shell so dashboard widgets fill large viewports */
   --max-width: 1680px;
 
-  /* Typography */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Typography — system stack (no Google Fonts fetch at build time) */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
   --color-aura-bg: var(--color-background);
   --color-aura-fg: var(--color-on-background);
   --color-aura-muted: var(--color-on-surface-variant);
