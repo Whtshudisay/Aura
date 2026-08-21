@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface UseBreathingTimerOptions {
   /** Phase durations in seconds, e.g. [4, 4, 4, 4]. */
@@ -11,6 +11,8 @@ export interface UseBreathingTimerOptions {
   totalSets?: number;
   /** Auto-start when mounted / when phases change. Default: false. */
   autoStart?: boolean;
+  /** Lung-pacing scale applied to each phase (Gentle 0.75, Deep 1.25). Default: 1. */
+  paceMultiplier?: number;
   onPhaseChange?: (info: {
     phaseIndex: number;
     label: string;
@@ -63,11 +65,16 @@ export function useBreathingTimer({
   phaseLabels,
   totalSets = Infinity,
   autoStart = false,
+  paceMultiplier = 1,
   onPhaseChange,
   onSetComplete,
   onComplete,
 }: UseBreathingTimerOptions): BreathingTimerState & BreathingTimerControls {
-  const safePhases = phases.length > 0 ? phases : [4];
+  const pace = Number.isFinite(paceMultiplier) && paceMultiplier > 0 ? paceMultiplier : 1;
+  const safePhases = useMemo(() => {
+    const src = phases.length > 0 ? phases : [4];
+    return src.map((sec) => Math.max(1, Math.round(sec * pace)));
+  }, [phases, pace]);
   const finiteSets = Number.isFinite(totalSets) ? Math.max(1, totalSets) : Infinity;
 
   const [isRunning, setIsRunning] = useState(autoStart);
@@ -90,7 +97,7 @@ export function useBreathingTimer({
   onSetCompleteRef.current = onSetComplete;
   onCompleteRef.current = onComplete;
 
-  const phasesKey = safePhases.join(",");
+  const phasesKey = `${safePhases.join(",")}:${pace}`;
   const labelsKey = (phaseLabels ?? []).join(",");
 
   const emitPhase = useCallback(
@@ -198,7 +205,7 @@ export function useBreathingTimer({
 
     rafRef.current = requestAnimationFrame(tick);
     return stopRaf;
-  }, [isRunning, isComplete, safePhases, finiteSets, emitPhase, stopRaf]);
+  }, [isRunning, isComplete, safePhases, phasesKey, finiteSets, emitPhase, stopRaf]);
 
   const start = useCallback(() => {
     if (isComplete) {

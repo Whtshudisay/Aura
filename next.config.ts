@@ -13,12 +13,16 @@ const withPWA = withPWAInit({
   reloadOnOnline: true,
 });
 
+const isProd = process.env.NODE_ENV === "production";
+
 /**
  * CSP notes:
  * - 'unsafe-inline' / 'unsafe-eval': required by Next.js runtime + inline boot scripts
  * - media-src 'self': local ambient audio under /public/audio
  * - connect-src: Supabase Auth/DB + Vercel Analytics
  * - frame-ancestors 'none': reinforces X-Frame-Options DENY
+ * - upgrade-insecure-requests / HSTS: production only. On LAN HTTP
+ *   (phone → http://192.168.x.x:3000) they force HTTPS and break the page.
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -35,7 +39,7 @@ const contentSecurityPolicy = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
+  ...(isProd ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const securityHeaders = [
@@ -47,15 +51,20 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
   },
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
-  // HTTPS only in production (ignored on http://localhost)
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
-  },
+  ...(isProd
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=63072000; includeSubDomains; preload",
+        },
+      ]
+    : []),
 ];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Phone-on-Wi‑Fi hits this machine via LAN IP, not localhost.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.16.*.*", "172.17.*.*", "172.18.*.*"],
   experimental: {
     staleTimes: {
       dynamic: 30,

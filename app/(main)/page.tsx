@@ -1,6 +1,7 @@
 import { FeaturedPatternCard } from "@/components/FeaturedPatternCard";
 import { TechniqueCard, ViewAllCard } from "@/components/TechniqueCard";
 import { WeeklyProgressSidebar } from "@/components/WeeklyProgressSidebar";
+import { CalmNowBanner, CalmNowFab } from "@/components/CalmNowButton";
 import {
   getAllPatterns,
   getFeaturedPattern,
@@ -26,6 +27,8 @@ export default async function HomePage() {
       <h1 className="display-lg text-[var(--color-on-surface)]">
         Find your center, {firstName}.
       </h1>
+
+      <CalmNowBanner />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-stretch xl:grid-cols-[minmax(0,2fr)_minmax(300px,0.75fr)] xl:gap-8">
         <FeaturedPatternCard pattern={featured} />
@@ -54,6 +57,7 @@ export default async function HomePage() {
           <ViewAllCard total={total} />
         </div>
       </section>
+      <CalmNowFab />
     </main>
   );
 }

@@ -4,10 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BreathingPattern } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { usePacingMode } from "@/hooks/usePacingMode";
+import { PacingControl } from "@/components/PacingControl";
+import { scalePhases } from "@/lib/pacing";
 
 export function FeaturedPatternCard({ pattern }: { pattern: BreathingPattern }) {
   const router = useRouter();
   const [duration, setDuration] = useState(pattern.defaultDurationMin);
+  const pacing = usePacingMode();
+  const paced = scalePhases(pattern.phases, pacing.multiplier);
 
   const start = () => {
     router.push(`/session/${pattern.id}?duration=${duration}`);
@@ -23,9 +28,16 @@ export function FeaturedPatternCard({ pattern }: { pattern: BreathingPattern }) 
         <p className="label-caps mb-4 text-[var(--color-primary)]">{pattern.tag}</p>
       )}
       <h2 className="headline-lg mb-3 text-[var(--color-on-surface)]">{pattern.name}</h2>
-      <p className="mb-8 max-w-xl text-base leading-relaxed text-[var(--color-on-surface-variant)]">
+      <p className="mb-6 max-w-xl text-base leading-relaxed text-[var(--color-on-surface-variant)]">
         {pattern.description}
       </p>
+      <p className="mb-6 text-xs text-[var(--color-on-surface-variant)]">
+        Phases: {paced.join("–")}s
+      </p>
+
+      <div className="mb-6">
+        <PacingControl mode={pacing.mode} onChange={pacing.setMode} />
+      </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div

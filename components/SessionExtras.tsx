@@ -1,6 +1,8 @@
 "use client";
 
 import type { AmbientTrackId } from "@/lib/preferences";
+import type { PacingMode } from "@/lib/pacing";
+import { PacingControl } from "@/components/PacingControl";
 
 export function SessionExtras({
   hapticsEnabled,
@@ -13,6 +15,9 @@ export function SessionExtras({
   volume,
   onVolumeChange,
   tracks,
+  pacingMode,
+  onPacingChange,
+  pacingDisabled,
 }: {
   hapticsEnabled: boolean;
   hapticsSupported: boolean;
@@ -24,9 +29,20 @@ export function SessionExtras({
   volume: number;
   onVolumeChange: (v: number) => void;
   tracks: Array<{ id: Exclude<AmbientTrackId, "off">; label: string }>;
+  pacingMode: PacingMode;
+  onPacingChange: (mode: PacingMode) => void;
+  pacingDisabled?: boolean;
 }) {
   return (
     <div className="glass flex w-full max-w-md flex-col gap-3 rounded-[var(--radius-md)] px-4 py-3">
+      <PacingControl
+        mode={pacingMode}
+        onChange={onPacingChange}
+        disabled={pacingDisabled}
+      />
+
+      <div className="h-px bg-white/10" aria-hidden />
+
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm text-[var(--color-on-surface)]">Haptics</p>

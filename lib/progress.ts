@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { PatternAccent, RecentSession, WeeklyProgress } from "@/lib/types";
+import { summarizeMoods } from "@/lib/moodLog";
+import type { PatternAccent, RecentSession, SessionMood, WeeklyProgress } from "@/lib/types";
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -64,16 +65,24 @@ export async function recordPracticeSession(input: {
   patternName: string;
   durationMin: number;
   accent: PatternAccent;
+  mood?: SessionMood | null;
 }): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.from("practice_sessions").insert({
+  const row: Record<string, unknown> = {
     user_id: input.userId,
     pattern_id: input.patternId,
     pattern_name: input.patternName,
     duration_min: Math.max(1, Math.round(input.durationMin)),
     accent: input.accent,
     completed_at: new Date().toISOString(),
-  });
+  };
+  if (input.mood) row.mood = input.mood;
+
+  let { error } = await supabase.from("practice_sessions").insert(row);
+  if (error && input.mood) {
+    delete row.mood;
+    ({ error } = await supabase.from("practice_sessions").insert(row));
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -87,13 +96,35 @@ export const getWeeklyProgressForUser = cache(
     const now = new Date();
     const weekStartMs = startOfWeek(now).getTime();
 
-    const { data: rows } = await supabase
+    type SessionRow = {
+      id: string;
+      pattern_id: string;
+      pattern_name: string;
+      duration_min: number;
+      accent: string;
+      completed_at: string;
+      mood?: string | null;
+    };
+
+    let rows: SessionRow[] | null = null;
+    const withMood = await supabase
       .from("practice_sessions")
-      .select("id, pattern_id, pattern_name, duration_min, accent, completed_at")
+      .select("id, pattern_id, pattern_name, duration_min, accent, completed_at, mood")
       .eq("user_id", userId)
       .order("completed_at", { ascending: false });
 
-    const list = rows ?? [];
+    if (withMood.error) {
+      const fallback = await supabase
+        .from("practice_sessions")
+        .select("id, pattern_id, pattern_name, duration_min, accent, completed_at")
+        .eq("user_id", userId)
+        .order("completed_at", { ascending: false });
+      rows = (fallback.data ?? []) as SessionRow[];
+    } else {
+      rows = (withMood.data ?? []) as SessionRow[];
+    }
+
+    const list = rows;
 
     const totalMin = list.reduce((sum, row) => {
       if (new Date(row.completed_at).getTime() >= weekStartMs) {
@@ -109,7 +140,16 @@ export const getWeeklyProgressForUser = cache(
       when: formatWhen(row.completed_at, now),
       durationMin: row.duration_min,
       accent: row.accent as PatternAccent,
+      mood: (row.mood as SessionMood | null) ?? null,
     }));
+
+    const mood = summarizeMoods(
+      list.map((r) => ({
+        at: r.completed_at,
+        mood: (r.mood as SessionMood | null) ?? null,
+      })),
+      now,
+    );
 
     return {
       totalMin,
@@ -119,6 +159,7 @@ export const getWeeklyProgressForUser = cache(
         now,
       ),
       recent,
+      mood,
     };
   },
 );
@@ -129,5 +170,6 @@ export function emptyWeeklyProgress(goalMin = 60): WeeklyProgress {
     goalMin,
     streakDays: 0,
     recent: [],
+    mood: { logged: 0, lifted: 0, recentMoods: [] },
   };
 }
