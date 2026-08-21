@@ -28,7 +28,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Guests can use the library immediately; sign-in is optional to save streaks.
+
+### PWA / offline
+
+Production builds (`npm run build`) generate a service worker via `@ducanh2912/next-pwa`. Install from mobile browser (“Add to Home Screen”). Ambient loops live in `public/audio/` (`rain.mp3`, `meditation.mp3`).
 
 ## Deploy to Vercel + Supabase
 

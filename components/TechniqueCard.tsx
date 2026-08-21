@@ -4,7 +4,34 @@ import Link from "next/link";
 import type { BreathingPattern } from "@/lib/types";
 import { PatternIconBadge } from "@/components/PatternIcon";
 
-export function TechniqueCard({ pattern }: { pattern: BreathingPattern }) {
+export function TechniqueCard({
+  pattern,
+  locked = false,
+}: {
+  pattern: BreathingPattern;
+  locked?: boolean;
+}) {
+  if (locked) {
+    return (
+      <div className="glass relative flex h-full min-h-[200px] flex-col rounded-[var(--radius-md)] p-5 opacity-80 sm:min-h-[220px] sm:p-6">
+        <PatternIconBadge icon={pattern.icon} accent={pattern.accent} />
+        <h3 className="mt-4 text-lg font-medium tracking-wide text-[var(--color-on-surface)]">
+          {pattern.shortName}
+        </h3>
+        <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--color-on-surface-variant)] sm:text-[0.95rem]">
+          {pattern.description}
+        </p>
+        <Link
+          href={`/login?mode=register&next=/session/${pattern.id}`}
+          className="mt-4 inline-flex items-center gap-2 text-sm text-[var(--color-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+        >
+          <LockIcon />
+          Sign up to unlock
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <Link
       href={`/session/${pattern.id}?duration=${pattern.defaultDurationMin}`}
@@ -40,5 +67,21 @@ export function ViewAllCard({ total }: { total: number }) {
         View All {total} Techniques
       </span>
     </Link>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      aria-hidden
+    >
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+    </svg>
   );
 }

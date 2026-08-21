@@ -24,7 +24,7 @@ function formatWhen(iso: string, now = new Date()): string {
   yesterday.setDate(yesterday.getDate() - 1);
   const sessionDay = startOfDay(date);
 
-  const time = date.toLocaleTimeString(undefined, {
+  const time = date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -32,7 +32,7 @@ function formatWhen(iso: string, now = new Date()): string {
   if (sessionDay.getTime() === today.getTime()) return `Today, ${time}`;
   if (sessionDay.getTime() === yesterday.getTime()) return `Yesterday, ${time}`;
 
-  return `${date.toLocaleDateString(undefined, { weekday: "short" })}, ${time}`;
+  return `${date.toLocaleDateString("en-US", { weekday: "short" })}, ${time}`;
 }
 
 function computeStreak(completedAts: string[], now = new Date()): number {
