@@ -9,8 +9,10 @@ import {
 
 const initial: AuthFormState = {};
 
+const inputClass =
+  "rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-fill)] px-4 py-3 text-[var(--color-on-surface)] outline-none placeholder:text-[var(--color-outline)] focus:border-[var(--color-primary)]/60";
+
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
-  // Separate hooks + key on the page remount so login never reuses register state/action.
   if (mode === "register") {
     return <RegisterForm />;
   }
@@ -21,7 +23,7 @@ function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, initial);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-4" suppressHydrationWarning>
       <EmailField />
       <PasswordField autoComplete="current-password" />
       <ErrorMessage error={state.error} />
@@ -34,7 +36,7 @@ function RegisterForm() {
   const [state, formAction, pending] = useActionState(registerAction, initial);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-4" suppressHydrationWarning>
       <label className="flex flex-col gap-2">
         <span className="label-caps text-[var(--color-on-surface-variant)]">Name</span>
         <input
@@ -43,7 +45,8 @@ function RegisterForm() {
           required
           autoComplete="name"
           placeholder="Alex"
-          className="rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-fill)] px-4 py-3 text-[var(--color-on-surface)] outline-none placeholder:text-[var(--color-outline)] focus:border-[var(--color-primary)]/60"
+          className={inputClass}
+          suppressHydrationWarning
         />
       </label>
       <EmailField />
@@ -72,7 +75,8 @@ function EmailField() {
         required
         autoComplete="email"
         placeholder="you@example.com"
-        className="rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-fill)] px-4 py-3 text-[var(--color-on-surface)] outline-none placeholder:text-[var(--color-outline)] focus:border-[var(--color-primary)]/60"
+        className={inputClass}
+        suppressHydrationWarning
       />
     </label>
   );
@@ -89,7 +93,8 @@ function PasswordField({ autoComplete }: { autoComplete: string }) {
         minLength={6}
         autoComplete={autoComplete}
         placeholder="••••••••"
-        className="rounded-[var(--radius-md)] border border-[var(--glass-border)] bg-[var(--glass-fill)] px-4 py-3 text-[var(--color-on-surface)] outline-none placeholder:text-[var(--color-outline)] focus:border-[var(--color-primary)]/60"
+        className={inputClass}
+        suppressHydrationWarning
       />
     </label>
   );

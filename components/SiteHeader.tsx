@@ -76,7 +76,7 @@ export function SiteHeader({
         ) : (
           <Link
             href="/login"
-            className="hidden rounded-full px-3 py-1.5 text-xs tracking-wide text-[var(--color-primary)] sm:inline"
+            className="rounded-full px-3 py-1.5 text-xs tracking-wide text-[var(--color-primary)]"
           >
             Sign in
           </Link>

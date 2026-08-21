@@ -28,9 +28,11 @@ export function BreathingOrb({
   const minScale = 0.72;
   const maxScale = 1;
   const visualScale = minScale + orbScale * (maxScale - minScale);
-  const gentleScale = reduceMotion
-    ? minScale + orbScale * (maxScale - minScale) * 0.45 + 0.2
-    : visualScale;
+  // null on SSR/first paint — treat as false so server and client match
+  const gentleScale =
+    reduceMotion === true
+      ? minScale + orbScale * (maxScale - minScale) * 0.45 + 0.2
+      : visualScale;
 
   const label = phaseLabel.toUpperCase();
   const ringOpacity = 0.25 + phaseProgress * 0.15;

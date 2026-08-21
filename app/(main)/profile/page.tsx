@@ -5,7 +5,33 @@ import { getWeeklyProgressForUser } from "@/lib/progress";
 
 export default async function ProfilePage() {
   const user = await getSessionUser();
-  if (!user) return null;
+
+  if (!user) {
+    return (
+      <main className="page-shell mt-6 max-w-lg lg:mt-10">
+        <p className="label-caps mb-2 text-[var(--color-primary)]">Profile</p>
+        <h1 className="headline-lg mb-4 text-[var(--color-on-surface)]">Guest</h1>
+        <div className="glass space-y-4 rounded-[var(--radius-lg)] p-6">
+          <p className="text-sm leading-relaxed text-[var(--color-on-surface-variant)]">
+            You can breathe right away as a guest. Create a free account to save
+            streaks, weekly minutes, and recent sessions across devices.
+          </p>
+          <Link
+            href="/login?mode=register"
+            className="inline-flex rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-medium text-[var(--color-on-primary)]"
+          >
+            Create account
+          </Link>
+          <p className="text-sm text-[var(--color-on-surface-variant)]">
+            Already have an account?{" "}
+            <Link href="/login" className="text-[var(--color-primary)] hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   const progress = await getWeeklyProgressForUser(user.id, user.weeklyGoalMin);
 
